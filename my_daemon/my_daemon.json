@@ -1,0 +1,16 @@
+[
+  {
+    "name": "yarn-install",
+    "command": "yarn install",
+    "trigger": "git-checkout"
+  },{
+    "name": "bundle-install",
+    "command": "bundle install",
+    "trigger": "git-checkout"
+  },{
+    "name": "db-prepare",
+    "command": "bundle exec rake db:prepare && RAILS_ENV=test bundle exec rake db:prepare",
+    "trigger": "git-checkout",
+    "dependencies": ["bundle-install"]
+  }
+]
