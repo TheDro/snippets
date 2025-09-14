@@ -4,7 +4,7 @@ This repo is a collection of short scripts and snippets of code that I use for d
 
 ## MyDaemon (WIP)
 
-This is a daemon that runs in the background to automatically run commands to remove some tedium from local development. This includes things like running `bundle install`, `db:migrate`, etc. whenever I switch branches.
+This is a daemon that runs in the background to automatically run commands to remove some tedium from local development. This includes things like running `bundle install`, `db:migrate`, etc. whenever I switch branches. Deployment instructions coming soon...
 
 ## Global Shortcuts
 
