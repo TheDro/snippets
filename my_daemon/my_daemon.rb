@@ -149,15 +149,18 @@ class WatcherTask < AutoTask
           self.class.tasks.each do |_, task|
             next unless task.trigger == "git-checkout"
             state = task.get_state
-            last_branch = state["last_branch"]
-            status = state["status"]
-            if new_branch != last_branch && status == "idle"
-              # TODO: check dependencies
-              puts "Branch changed. Running #{task.task_name}"
-              task.set_state(last_branch: new_branch)
-              task.background_fork do
-                task.run_command
-              end
+            next unless state["last_branch"] != new_branch && state["status"] == "idle"
+
+            busy = task.dependencies.map do |dependency_name|
+              dependency = AutoTask.tasks[dependency_name]
+              dependency.status == "running" || dependency.get_state["last_branch"] != new_branch
+            end.any?
+            next if busy
+
+            puts "Branch changed. Running #{task.task_name}"
+            task.set_state(last_branch: new_branch)
+            task.background_fork do
+              task.run_command
             end
           end
           sleep 5
