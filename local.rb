@@ -116,3 +116,59 @@ if Rails.env.development?
     CurrentQueries.query_stats = {}
   end
 end
+
+
+class SimpleDebouncer
+  def initialize(delay, &block)
+    @delay = delay
+    @block = block
+    @timer = nil
+    @mutex = Mutex.new
+  end
+
+  def call(*args)
+    @mutex.synchronize do
+      @timer&.kill
+      @timer = Thread.new do
+        sleep(@delay)
+        @block.call(*args)
+      end
+    end
+  end
+
+  def cancel
+    @mutex.synchronize do
+      @timer&.kill
+      @timer = nil
+    end
+  end
+end
+
+$modified_files = Set.new
+module ListenerPatch
+  @@debouncer = nil
+  # $modified_files = Set.new
+  def changed(modified, added, removed)
+    puts "Modified: #{modified.inspect}"
+    $modified_files.merge(modified)
+    @@debouncer ||= SimpleDebouncer.new(0.5) do
+      puts "Reloading the files"
+      Rails.application.reloader.reload!
+      $modified_files.to_a.each do |file|
+        Rails.application.autoloaders.main.load_file(file)
+      end
+      puts "Done reloading"
+      # $modified_files = Set.new
+    end
+    @@debouncer.call
+    super
+  end
+end
+
+Rails.autoloaders.log!
+Rails.autoloaders.main.on_load do |cpath, value, abspath|
+  # puts "#{cpath} / #{value} / #{abspath}"
+  $modified_files.add(abspath) if abspath.end_with?(".rb")
+end
+
+ActiveSupport::EventedFileUpdateChecker::Core.prepend(ListenerPatch)
