@@ -141,7 +141,7 @@ class WatcherTask < AutoTask
 
   def start
     if status == "running"
-      puts "wather is already running"
+      puts "watcher is already running"
     else
       background_fork do
         loop do
@@ -155,6 +155,7 @@ class WatcherTask < AutoTask
               dependency = AutoTask.tasks[dependency_name]
               dependency.status == "running" || dependency.get_state["last_branch"] != new_branch
             end.any?
+            puts "#{task.task_name} is waiting for another task" if busy
             next if busy
 
             puts "Branch changed. Running #{task.task_name}"
@@ -169,6 +170,7 @@ class WatcherTask < AutoTask
     end
   end
 end
+
 
 ##### CLI #####
 command = ARGV[0]
